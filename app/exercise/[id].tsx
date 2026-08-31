@@ -6,6 +6,8 @@ import type { WorkoutSet } from '@/models/set';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { loadData, saveData } from '@/services/storage-service';
+import { ExerciseHistoryEntry } from '@/models/exercise-history-entry';
+import { router } from 'expo-router';
 
 const initialSets: WorkoutSet[] = [
   {
@@ -61,7 +63,17 @@ export default function ExerciseScreen() {
   }, [sets,storageKey,hasLoaded]);
 
   async function saveWorkout() {
-    const storageKey = `exercise-history:${id}`
+    const storageKey = `exercise-history:${id}`;
+
+    const history = (await loadData<ExerciseHistoryEntry[]>(storageKey)) ?? [];
+
+    const newEntry: ExerciseHistoryEntry = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      sets: sets,
+    };
+
+    await saveData(storageKey,[...history, newEntry]);
   }
 
   function addSet() {
@@ -94,6 +106,14 @@ export default function ExerciseScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{exercise?.name ?? 'Exercise Not Found'}</Text>
+        <Pressable style={styles.historyButton} onPress={() => 
+          router.push({
+            pathname:'/exercise/[id]-history',
+            params: {id},
+          })
+        }>
+          <Text style={styles.historyButtonText}>View History</Text>
+        </Pressable>
         <Text style={styles.workload}>Total Workload: {totalworkload}</Text>
         {sets.map((set, index) => (
           <View key={set.id} style={styles.setRow}>
@@ -104,6 +124,7 @@ export default function ExerciseScreen() {
             onFocus={() => updateSet(set.id, 'weight', '')}
             onChangeText={(value) => updateSet(set.id, 'weight', value)}
             keyboardType="decimal-pad"/>
+            <Text style={styles.text}> kg</Text>
             
             <TextInput style={styles.input}
             value={set.reps}
@@ -111,8 +132,7 @@ export default function ExerciseScreen() {
             onChangeText={(value) => updateSet(set.id, 'reps', value)}
             keyboardType="decimal-pad"/>
 
-            <Text style={styles.text}>{set.weight} kg</Text>
-            <Text style={styles.text}>{set.reps} reps</Text>
+            <Text style={styles.text}> reps</Text>
             <Pressable onPress={() => deleteSet(set.id)}>
               <Text style={styles.deleteText}>x</Text>
             </Pressable>
@@ -122,6 +142,9 @@ export default function ExerciseScreen() {
           <Text style={styles.addButtonText}>+ Add Set</Text>
         </Pressable>
       </ScrollView>
+      <Pressable style={styles.saveButton} onPress={saveWorkout}>
+        <Text style={styles.saveButtontext}>Save Workout</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -132,7 +155,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-    scrollContent: {
+  scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -195,5 +218,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 8,
     marginBottom: 12,
+  },
+
+  saveButton: {
+    marginVertical: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#1f1f1f',
+    borderRadius: 10,
+  },
+
+  saveButtontext: {
+    color: 'darkgrey',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  historyButton: {
+    marginVertical: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: '#1f1f1f',
+    borderRadius: 10,
+  },
+
+  historyButtonText: {
+    color: 'darkgrey',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
