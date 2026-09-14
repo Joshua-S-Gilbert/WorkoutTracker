@@ -59,6 +59,7 @@ export default function HomeScreen() {
     }
     await deleteGroup(db, selectedGroupId);
     const data = await getAllGroups(db);
+    setGroups(data);
     if (data.length > 0){
       setSelectedGroupId(data[0].id);
     } else {
@@ -190,7 +191,7 @@ export default function HomeScreen() {
         >
           <View style={styles.modalBackdrop}>
             <View style={styles.modalCard}>
-              <Text style={modalTitle}>
+              <Text style={styles.modalTitle}>
                 {groupAction === 'create' && 'Create Group'}
                 {groupAction === 'duplicate' && 'Duplicate Group'}
                 {groupAction === 'rename' && 'Rename Group'}
@@ -213,7 +214,7 @@ export default function HomeScreen() {
                 </Pressable>
                 <Pressable
                   style={styles.groupActionButton}
-                  onPress={() => setModalVisible(false)}
+                  onPress={handleGroupSubmit}
                 >
                   <Text style={styles.text}>Save</Text>
                 </Pressable>
